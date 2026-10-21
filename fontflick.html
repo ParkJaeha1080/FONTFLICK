@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Font Flick — 텍스트 영상 생성기</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0b10;--panel:#15151e;--line:#292936;--muted:#a4a4b5;--accent:#b7ff5a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% -10%,#292345 0,transparent 40%),var(--bg);color:#f6f5fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:24px clamp(16px,4vw,44px);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #242430}
+.brand{font-weight:900;letter-spacing:-.06em;font-size:24px}.brand span{color:var(--accent)}.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:7px 10px;border-radius:999px}
+main{max-width:1180px;margin:auto;padding:28px clamp(14px,3vw,32px) 50px;display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,.78fr);gap:22px}
+.panel{background:color-mix(in srgb,var(--panel) 94%,transparent);border:1px solid var(--line);border-radius:22px;padding:22px;min-width:0}
+h1{font-size:clamp(28px,4vw,44px);line-height:1.02;letter-spacing:-.055em;margin:0 0 10px} .sub{color:var(--muted);line-height:1.55;margin:0 0 22px;font-size:14px}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:800;margin:22px 0 10px}
+label{display:block;font-size:13px;color:#dedee9;margin-bottom:8px;font-weight:650}
+textarea,input,select{width:100%;background:#0e0e15;color:#fff;border:1px solid #343443;border-radius:11px;padding:12px 13px;font:inherit;outline:none}
+textarea:focus,input:focus,select:focus{border-color:var(--accent)}textarea{min-height:92px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{margin-bottom:14px}.range-line{display:flex;align-items:center;justify-content:space-between;gap:12px}.range-line output{color:var(--accent);font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}input[type=range]{padding:0;accent-color:var(--accent);border:0;background:transparent}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:12px}.color-field{display:flex;align-items:center;gap:10px;background:#0e0e15;border:1px solid #343443;border-radius:11px;padding:7px 10px}.color-field input{width:38px;height:30px;padding:0;border:0;background:transparent}.color-field span{font-size:12px;color:var(--muted)}
+.preview-wrap{position:sticky;top:14px;align-self:start}.preview-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}.preview-head strong{font-size:15px}.live{font-size:11px;color:var(--accent);display:flex;gap:6px;align-items:center}.live:before{content:"";width:6px;height:6px;background:var(--accent);border-radius:50%}
+.canvas-shell{background:#08080c;border-radius:16px;padding:8px;border:1px solid #30303a}canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;border-radius:10px}
+.preview-note{color:var(--muted);font-size:12px;line-height:1.5;margin:12px 0 18px}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:13px 16px;font:inherit;font-size:14px;font-weight:850;cursor:pointer;transition:transform .15s,opacity .15s}.btn:active{transform:scale(.98)}.primary{background:var(--accent);color:#10120b;flex:1}.secondary{background:#262633;color:#fff;border:1px solid #393947}.btn:disabled{opacity:.45;cursor:not-allowed}
+.progress{height:5px;background:#292936;border-radius:99px;overflow:hidden;margin-top:14px}.progress div{height:100%;width:0;background:var(--accent);transition:width .1s}
+.status{font-size:12px;color:var(--muted);min-height:18px;margin-top:10px;line-height:1.5}
+footer{text-align:center;padding:0 16px 28px;color:#777789;font-size:12px}
+@media(max-width:780px){main{grid-template-columns:1fr;padding-top:18px}.preview-wrap{position:static;grid-row:1}.panel{padding:17px}.preview-wrap .panel{padding:16px}header{padding:18px 16px}.tag{font-size:10px}.sub{margin-bottom:15px}}
+</style>
+</head>
+<body>
+<header><div class="brand">FONT<span>FLICK</span> ✳</div><div class="tag">TEXT → MOTION → VIDEO</div></header>
+<main>
+<section class="panel">
+<h1>Make words<br>move fast.</h1>
+<p class="sub">폰트가 빠르게 바뀌는 타이포그래피 영상을 만들고 다운로드하세요.</p>
+<div class="section-title">01 / 콘텐츠</div>
+<div class="field"><label for="text">영상에 표시할 텍스트</label><textarea id="text" maxlength="300">YOUR TEXT HERE</textarea></div>
+<div class="grid2">
+<div class="field"><label for="duration">영상 길이 (초)</label><input id="duration" type="number" min="1" max="60" step="1" value="8"></div>
+<div class="field"><label for="fps">프레임 레이트</label><select id="fps"><option value="30">30 FPS · 부드러움</option><option value="24">24 FPS · 시네마틱</option><option value="60">60 FPS · 빠른 움직임</option></select></div>
+</div>
+<div class="section-title">02 / 애니메이션</div>
+<div class="field"><div class="range-line"><label for="speed">폰트 변경 속도</label><output id="speedOut">0.12초</output></div><input id="speed" type="range" min="0.04" max="0.8" step="0.01" value="0.12"></div>
+<div class="field"><div class="range-line"><label for="size">글자 크기</label><output id="sizeOut">100%</output></div><input id="size" type="range" min="35" max="180" step="5" value="100"></div>
+<div class="field"><label for="align">텍스트 정렬</label><select id="align"><option value="center">가운데</option><option value="left">왼쪽</option><option value="right">오른쪽</option></select></div>
+<div class="section-title">03 / 디자인</div>
+<div class="colors">
+<div class="field"><label>배경색</label><div class="color-field"><input id="bg" type="color" value="#09090f"><span id="bgLabel">#09090F</span></div></div>
+<div class="field"><label>글자색</label><div class="color-field"><input id="fg" type="color" value="#f5f5ff"><span id="fgLabel">#F5F5FF</span></div></div>
+</div>
+<div class="field"><label for="effect">효과</label><select id="effect"><option value="none">깔끔한 컷 전환</option><option value="flash">플래시 컷</option><option value="slide">좌우 슬라이드</option><option value="glitch">글리치 / RGB 분리</option></select></div>
+<div class="field"><label for="fontset">폰트 스타일</label><select id="fontset"><option value="mix">믹스 — 굵기와 분위기 다양하게</option><option value="bold">볼드 — 굵고 강하게</option><option value="mono">모노 — 디지털 / 코딩</option><option value="serif">세리프 — 에디토리얼</option><option value="random">랜덤 — 다양한 스타일</option></select></div>
+</section>
+<aside class="preview-wrap">
+<div class="panel">
+<div class="preview-head"><strong>라이브 미리보기</strong><span class="live">LIVE</span></div>
+<div class="canvas-shell"><canvas id="canvas" width="1280" height="720"></canvas></div>
+<p class="preview-note">미리보기는 현재 텍스트와 설정을 반영합니다. 녹화하면 설정한 길이만큼 영상이 생성됩니다.</p>
+<div class="btnrow"><button class="btn secondary" id="play">▶ 미리보기 재생</button><button class="btn secondary" id="stop">■ 정지</button></div>
+<div style="height:10px"></div>
+<div class="btnrow"><button class="btn primary" id="download">↓ 영상 다운로드</button></div>
+<div class="progress"><div id="bar"></div></div>
+<div class="status" id="status">준비 완료 · WebM 영상으로 저장할 수 있어요.</div>
+</div>
+<div class="panel" style="margin-top:14px">
+<div class="section-title" style="margin-top:0">EXPORT INFO</div>
+<div style="font-size:13px;line-height:1.8;color:#c3c3d0">해상도 <b style="color:white">1280 × 720 (16:9)</b><br>오디오 <b style="color:white">없음</b><br>저장 형식 <b style="color:white">WebM / 브라우저 지원 시 MP4</b></div>
+</div>
+</aside>
+</main>
+<footer>FONTFLICK · 영상은 브라우저 안에서 생성되며 서버로 업로드되지 않습니다.</footer>
+<script>
+const $=id=>document.getElementById(id), canvas=$('canvas'),ctx=canvas.getContext('2d');
+const fonts=[
+{family:'Arial Black, Impact, sans-serif',weight:900,style:'normal'},
+{family:'Georgia, serif',weight:700,style:'normal'},
+{family:'"Courier New", monospace',weight:700,style:'normal'},
+{family:'Impact, Haettenschweiler, sans-serif',weight:900,style:'normal'},
+{family:'Trebuchet MS, sans-serif',weight:800,style:'italic'},
+{family:'Verdana, sans-serif',weight:900,style:'normal'},
+{family:'Times New Roman, serif',weight:700,style:'italic'},
+{family:'system-ui, sans-serif',weight:300,style:'normal'},
+{family:'"Arial Narrow", Arial, sans-serif',weight:900,style:'normal'},
+{family:'monospace',weight:400,style:'normal'},
+{family:'Georgia, serif',weight:400,style:'italic'},
+{family:'system-ui, sans-serif',weight:950,style:'italic'}
+];
+let raf=0,playing=false,start=0,recording=false;
+function getFont(i){let f=fonts[i%fonts.length],set=$('fontset').value;
+ if(set==='bold')return {...f,family:['Arial Black, Impact, sans-serif','Impact, sans-serif','system-ui, sans-serif'][i%3],weight:900,style:i%4===0?'italic':'normal'};
+ if(set==='mono')return {...f,family:'"Courier New", monospace',weight:[400,700,900][i%3],style:i%3===0?'italic':'normal'};
+ if(set==='serif')return {...f,family:['Georgia, serif','Times New Roman, serif','Palatino, serif'][i%3],weight:[400,700,900][i%3],style:i%2?'italic':'normal'};
+ if(set==='random')return {...f,weight:[300,400,500,700,800,900][i%6],style:i%3===0?'italic':'normal'};
+ return f;
+}
+function settings(){return {text:$('text').value||' ',speed:+$('speed').value,size:+$('size').value,bg:$('bg').value,fg:$('fg').value,align:$('align').value,effect:$('effect').value,duration:Math.max(1,Math.min(60,+$('duration').value||8)),fps:+$('fps').value}}
+function draw(t=0,forceIndex=null){
+ const s=settings(),index=forceIndex===null?Math.floor(t/s.speed):forceIndex, f=getFont(index), w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle=s.bg;ctx.fillRect(0,0,w,h);
+ if(s.effect==='flash'&&index%2===1){ctx.fillStyle='#ffffff';ctx.globalAlpha=.16;ctx.fillRect(0,0,w,h);ctx.globalAlpha=1}
+ let base=150*s.size/100,lines=s.text.split('\n').slice(0,8),maxWidth=w*.86;
+ ctx.textAlign=s.align;ctx.textBaseline='middle';
+ let x=s.align==='left'?w*.07:s.align==='right'?w*.93:w/2;
+ let lineHeight=base*1.12,total=lines.length*lineHeight,y=h/2-total/2+lineHeight/2;
+ const textLines=lines.map(line=>{let fs=base;ctx.font=`${f.style} ${f.weight} ${fs}px ${f.family}`;while(ctx.measureText(line).width>maxWidth&&fs>18){fs-=3;ctx.font=`${f.style} ${f.weight} ${fs}px ${f.family}`}return {line,fs}});
+ lineHeight=Math.min(base*1.12,h*.82/Math.max(1,lines.length));total=lines.length*lineHeight;y=h/2-total/2+lineHeight/2;
+ if(s.effect==='slide')x+=(index%2?1:-1)*Math.min(75,(t%s.speed)/s.speed*75);
+ ctx.save();if(s.effect==='glitch'&&index%2===0){ctx.globalAlpha=.55;ctx.fillStyle='#ff315a';textLines.forEach((o,j)=>{ctx.font=`${f.style} ${f.weight} ${o.fs}px ${f.family}`;ctx.fillText(o.line,x-5,y+j*lineHeight)});ctx.fillStyle='#35eaff';textLines.forEach((o,j)=>{ctx.font=`${f.style} ${f.weight} ${o.fs}px ${f.family}`;ctx.fillText(o.line,x+5,y+j*lineHeight)});ctx.globalAlpha=1}
+ ctx.fillStyle=s.fg;textLines.forEach((o,j)=>{ctx.font=`${f.style} ${f.weight} ${o.fs}px ${f.family}`;ctx.fillText(o.line,x,y+j*lineHeight)});ctx.restore();
+}
+function previewLoop(now){if(!playing)return;if(!start)start=now;let elapsed=(now-start)/1000;draw(elapsed);if(elapsed>=settings().duration){playing=false;start=0;draw(0);return}raf=requestAnimationFrame(previewLoop)}
+function stop(){playing=false;cancelAnimationFrame(raf);start=0;draw(0)}
+['text','duration','fps','speed','size','align','bg','fg','effect','fontset'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='speed')$('speedOut').textContent=(+$('speed').value).toFixed(2)+'초';if(id==='size')$('sizeOut').textContent=$('size').value+'%';if(id==='bg')$('bgLabel').textContent=$('bg').value.toUpperCase();if(id==='fg')$('fgLabel').textContent=$('fg').value.toUpperCase();if(!playing&&!recording)draw(0)}));
+$('play').onclick=()=>{stop();playing=true;start=0;raf=requestAnimationFrame(previewLoop)};
+$('stop').onclick=stop;
+function chooseMime(){for(const type of ['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'])if(window.MediaRecorder&&MediaRecorder.isTypeSupported(type))return type;return ''}
+$('download').onclick=async()=>{
+ if(recording)return;
+ if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='이 브라우저는 영상 녹화를 지원하지 않아요. 최신 Safari 또는 Chrome을 사용해 주세요.';return}
+ stop();recording=true;$('download').disabled=true;$('play').disabled=true;
+ const s=settings(),fps=s.fps,stream=canvas.captureStream(fps),mime=chooseMime();
+ let recorder;try{recorder=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:8000000}:undefined)}catch(e){recording=false;$('status').textContent='이 브라우저에서 녹화 형식을 지원하지 않아요.';$('download').disabled=false;$('play').disabled=false;return}
+ const chunks=[];recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+ recorder.onerror=()=>{$('status').textContent='녹화 중 오류가 발생했습니다.';finishUI()};
+ recorder.onstop=()=>{const type=recorder.mimeType||'video/webm',blob=new Blob(chunks,{type}),url=URL.createObjectURL(blob),a=document.createElement('a'),ext=type.includes('mp4')?'mp4':'webm';a.href=url;a.download='fontflick-video.'+ext;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);stream.getTracks().forEach(t=>t.stop());$('bar').style.width='100%';$('status').textContent=`완료! ${ext.toUpperCase()} 영상 다운로드를 시작했어요.`;finishUI()};
+ function finishUI(){recording=false;$('download').disabled=false;$('play').disabled=false}
+ recorder.start(250);let began=performance.now();
+ const tick=now=>{let elapsed=(now-began)/1000;draw(elapsed);$('bar').style.width=Math.min(100,elapsed/s.duration*100)+'%';$('status').textContent=`영상 생성 중… ${Math.min(s.duration,elapsed).toFixed(1)} / ${s.duration}초`;if(elapsed>=s.duration){draw(s.duration);recorder.stop();return}requestAnimationFrame(tick)};
+ requestAnimationFrame(tick);
+};
+draw(0);
+</script>
+</body>
+</html>
